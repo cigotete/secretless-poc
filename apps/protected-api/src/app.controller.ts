@@ -1,12 +1,37 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import {
+  Controller,
+  Get,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
+
+import { TokenReviewService } from './token-review.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly tokenReviewService: TokenReviewService,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('protected')
+  async protected(
+    @Headers('authorization') authorization?: string,
+  ) {
+    if (!authorization?.startsWith('Bearer ')) {
+      throw new UnauthorizedException(
+        'Bearer token requerido',
+      );
+    }
+
+    const token = authorization.substring(7);
+
+    const identity =
+      await this.tokenReviewService.validate(token);
+
+    return {
+      message: 'Acceso autorizado',
+      workload: identity.user.username,
+      audiences: identity.audiences,
+    };
   }
 }
