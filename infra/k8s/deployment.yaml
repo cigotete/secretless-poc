@@ -43,6 +43,11 @@ spec:
           # intente descargar siempre la imagen desde un registry.
           imagePullPolicy: IfNotPresent
 
+          # Dirección interna que tendrá protected-api
+          env:
+            - name: PROTECTED_API_URL
+              value: "http://protected-api:3000"
+
           # Se monta el volumen que contendrá el JWT dentro
           # del filesystem del contenedor.
           volumeMounts:
