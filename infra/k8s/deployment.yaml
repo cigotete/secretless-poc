@@ -1,0 +1,88 @@
+# Indica qué API de Kubernetes define este recurso.
+# "apps/v1" es la utilizada para Deployments.
+apiVersion: apps/v1
+
+# Tipo de recurso que estamos creando.
+kind: Deployment
+
+metadata:
+  # Nombre del Deployment dentro de Kubernetes.
+  name: client-api
+
+spec:
+  # Queremos una sola instancia (Pod) de client-api.
+  replicas: 1
+
+  # El Deployment necesita identificar cuáles Pods administra.
+  selector:
+    matchLabels:
+      app: client-api
+
+  # "template" describe cómo deben crearse esos Pods.
+  template:
+    metadata:
+      labels:
+        # Esta etiqueta coincide con el selector anterior.
+        app: client-api
+
+    spec:
+      # IMPORTANTE PARA LA POC:
+      #
+      # El Pod se ejecutará usando esta identidad de Kubernetes.
+      # Es el ServiceAccount que se creó anteriormente.
+      serviceAccountName: client-workload
+
+      containers:
+        # Contenedores que existirán dentro del Pod.
+        - name: client-api
+
+          # Imagen Docker que contiene la aplicación NestJS.
+          image: client-api:latest
+
+          # Como se trabaja con Kind k8s, se evita que Kubernetes
+          # intente descargar siempre la imagen desde un registry.
+          imagePullPolicy: IfNotPresent
+
+          # Se monta el volumen que contendrá el JWT dentro
+          # del filesystem del contenedor.
+          volumeMounts:
+            - name: workload-token
+
+              # NestJS podrá leer el token desde:
+              #
+              # /var/run/secrets/workload/token
+              mountPath: /var/run/secrets/workload
+
+              # La aplicación solamente necesita leerlo.
+              readOnly: true
+
+      # Definición de volúmenes disponibles para el Pod.
+      volumes:
+        - name: workload-token
+
+          # "projected" permite que Kubernetes genere/proyecte
+          # información dentro del Pod.
+          projected:
+            sources:
+
+              # IMPORTANTE PARA LA POC:
+              #
+              # Se solicita un JWT asociado al ServiceAccount
+              # "client-workload".
+              - serviceAccountToken:
+
+                  # Nombre del archivo que Kubernetes creará
+                  # dentro del volumeMount.
+                  path: token
+
+                  # El JWT solamente debe utilizarse para
+                  # autenticarse ante "protected-api".
+                  #
+                  # Esto aparecerá como:
+                  #
+                  # "aud": ["protected-api"]
+                  audience: protected-api
+
+                  # Se solicita un token con duración de 1 hora.
+                  # Kubernetes se encargará también de rotarlo.
+                  expirationSeconds: 3600
