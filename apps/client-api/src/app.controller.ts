@@ -1,12 +1,22 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { ProtectedApiService } from './protected-api.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly protectedApiService: ProtectedApiService,
+  ) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello() {
+    return {
+      service: 'client-api',
+      status: 'running',
+    };
+  }
+
+  @Get('call-protected')
+  async callProtectedApi() {
+    return this.protectedApiService.callProtectedApi();
   }
 }
