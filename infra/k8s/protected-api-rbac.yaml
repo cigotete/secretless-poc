@@ -1,0 +1,30 @@
+# Permite consultar la API TokenReview.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: protected-api-token-reviewer
+rules:
+  - apiGroups:
+      - authentication.k8s.io
+
+    resources:
+      - tokenreviews
+
+    verbs:
+      - create
+
+---
+# Asigna ese permiso al ServiceAccount de protected-api.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: protected-api-token-reviewer
+subjects:
+  - kind: ServiceAccount
+    name: protected-api
+    namespace: default
+
+roleRef:
+  kind: ClusterRole
+  name: protected-api-token-reviewer
+  apiGroup: rbac.authorization.k8s.io
