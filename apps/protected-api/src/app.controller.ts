@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { TokenReviewService } from './token-review.service';
+import { KeycloakTokenService } from './keycloak-token.service';
 
 @Controller()
 export class AppController {
   constructor(
-    private readonly tokenReviewService: TokenReviewService,
+    private readonly keycloakTokenService: KeycloakTokenService,
   ) {}
 
   @Get('protected')
@@ -26,12 +26,13 @@ export class AppController {
     const token = authorization.substring(7);
 
     const identity =
-      await this.tokenReviewService.validate(token);
+      await this.keycloakTokenService.validate(token);
 
     return {
       message: 'Acceso autorizado',
-      workload: identity.user.username,
-      audiences: identity.audiences,
+      client: identity.azp,
+      subject: identity.sub,
+      issuer: identity.iss,
     };
   }
 }

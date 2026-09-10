@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { TokenReviewService } from './token-review.service';
+import { KeycloakTokenService } from './keycloak-token.service';
 
 @Module({
   imports: [],
   controllers: [AppController],
-  providers: [TokenReviewService],
+  providers: [KeycloakTokenService],
 })
 export class AppModule {}
