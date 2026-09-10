@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: keycloak
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: keycloak
+
+  template:
+    metadata:
+      labels:
+        app: keycloak
+
+    spec:
+      containers:
+        - name: keycloak
+
+          # Versión actual de Keycloak para la PoC.
+          image: quay.io/keycloak/keycloak:26.7.3
+
+          args:
+            # Modo desarrollo.
+            # Adecuado únicamente para esta PoC local.
+            - start-dev
+
+          env:
+            # Usuario administrador inicial.
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: admin
+
+            # Solo por ser PoC.
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: admin
+
+          ports:
+            - containerPort: 8080
