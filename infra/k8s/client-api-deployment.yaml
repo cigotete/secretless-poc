@@ -81,13 +81,11 @@ spec:
                   path: token
 
                   # El JWT solamente debe utilizarse para
-                  # autenticarse ante "protected-api".
+                  # autenticarse ante keycloak.
                   #
                   # Esto aparecerá como:
                   #
-                  # "aud": ["protected-api"]
-                  audience: protected-api
+                  # "aud": ["http://keycloak:8080/realms/secretless-poc"]
+                  audience: http://keycloak:8080/realms/secretless-poc
 
-                  # Se solicita un token con duración de 1 hora.
-                  # Kubernetes se encargará también de rotarlo.
-                  expirationSeconds: 3600
+                  expirationSeconds: 600
