@@ -6,25 +6,62 @@ export class ProtectedApiService {
   private readonly tokenPath = '/var/run/secrets/workload/token';
 
   async callProtectedApi() {
-    // Kubernetes mantiene este archivo con el JWT temporal
-    // asociado al ServiceAccount "client-workload".
-    const token = await readFile(this.tokenPath, 'utf8');
+    // 1. JWT emitido por Kubernetes para client-workload
+    const kubernetesToken = await readFile(
+      this.tokenPath,
+      'utf8',
+    );
 
-    // La URL vendrá desde Kubernetes mediante una variable
-    // de entorno.
-    const protectedApiUrl =
-      process.env.PROTECTED_API_URL ?? 'http://protected-api:3000';
+    // 2. Se solicita a Keycloak un nuevo access token
+    const tokenResponse = await fetch(
+      'http://keycloak:8080/realms/secretless-poc/protocol/openid-connect/token',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
 
-    const response = await fetch(`${protectedApiUrl}/protected`, {
-      headers: {
-        // Se envía el JWT generado por Kubernetes.
-        Authorization: `Bearer ${token}`,
+          client_id: 'client-api',
+
+          // El JWT de Kubernetes se presenta como
+          // credencial del cliente.
+          client_assertion_type:
+            'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+
+          client_assertion: kubernetesToken,
+        }),
       },
-    });
+    );
+
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.text();
+
+      throw new Error(
+        `Keycloak rechazó el token: ${tokenResponse.status} ${error}`,
+      );
+    }
+
+    const tokenResult = await tokenResponse.json();
+
+    const accessToken = tokenResult.access_token;
+
+    // 3. Ahora se llama a protected-api usando
+    // el token emitido por Keycloak, NO el de Kubernetes.
+    const response = await fetch(
+      'http://protected-api:3000/protected',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
 
     if (!response.ok) {
       throw new Error(
-        `protected-api respondió con HTTP ${response.status}`,
+        `protected-api respondió HTTP ${response.status}`,
       );
     }
 
