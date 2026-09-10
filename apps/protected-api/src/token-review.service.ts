@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 
 import { readFile } from 'node:fs/promises';
+import { Agent, fetch } from 'undici';
 
 @Injectable()
 export class TokenReviewService {
@@ -20,6 +21,20 @@ export class TokenReviewService {
       '/var/run/secrets/kubernetes.io/serviceaccount/token',
       'utf8',
     );
+
+    // CA interna del cluster.
+    const ca = await readFile(
+      '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt',
+      'utf8',
+    );
+
+    // Cliente HTTPS que confía específicamente
+    // en la CA del cluster Kubernetes.
+    const dispatcher = new Agent({
+      connect: {
+        ca,
+      },
+    });
 
     const response = await fetch(
       `${this.kubernetesApi}/apis/authentication.k8s.io/v1/tokenreviews`,
@@ -46,16 +61,18 @@ export class TokenReviewService {
             audiences: ['protected-api'],
           },
         }),
+
+        dispatcher,
       },
     );
 
     if (!response.ok) {
       throw new UnauthorizedException(
-        'No fue posible validar el token',
+        `TokenReview falló con HTTP ${response.status}`,
       );
     }
 
-    const review = await response.json();
+    const review: any = await response.json();
 
     if (!review.status?.authenticated) {
       throw new UnauthorizedException(
