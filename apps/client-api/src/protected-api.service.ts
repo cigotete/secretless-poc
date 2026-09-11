@@ -47,6 +47,21 @@ export class ProtectedApiService {
     const tokenResult = await tokenResponse.json();
 
     const accessToken = tokenResult.access_token;
+    
+    // Aprendizaje - Solo dev environment - Revisión Keycloak access token - NUNCA en producción
+    // Se deja para proposito educativos.
+    /*
+    const payload = JSON.parse(
+      Buffer.from(
+        accessToken.split('.')[1],
+        'base64url',
+      ).toString(),
+    );
+    console.log(
+      'KEYCLOAK ACCESS TOKEN:',
+      JSON.stringify(payload, null, 2),
+    );
+    */
 
     // 3. Ahora se llama a protected-api usando
     // el token emitido por Keycloak, NO el de Kubernetes.
