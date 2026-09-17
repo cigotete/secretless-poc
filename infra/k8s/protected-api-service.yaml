@@ -1,0 +1,25 @@
+apiVersion: v1
+
+# Recurso de red de Kubernetes.
+kind: Service
+
+metadata:
+  # Este nombre se convierte además en un hostname DNS
+  # dentro del cluster:
+  #
+  # http://protected-api
+  name: protected-api
+
+spec:
+  # Busca Pods que tengan esta etiqueta.
+  selector:
+    app: protected-api
+
+  ports:
+    - protocol: TCP
+
+      # Puerto que expondrá el Service.
+      port: 3000
+
+      # Puerto real donde escucha NestJS dentro del Pod.
+      targetPort: 3000
