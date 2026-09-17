@@ -5,6 +5,7 @@ metadata:
   name: keycloak
 
 spec:
+  # Con H2 DB se usa una única instancia.
   replicas: 1
 
   selector:
@@ -39,3 +40,15 @@ spec:
 
           ports:
             - containerPort: 8080
+
+          # /opt/keycloak/data es donde Keycloak mantiene
+          # los datos de la base H2 utilizada en esta PoC.
+          volumeMounts:
+            - name: keycloak-data
+              mountPath: /opt/keycloak/data
+
+      # Se asocia el volumen del Pod con el PVC.
+      volumes:
+        - name: keycloak-data
+          persistentVolumeClaim:
+            claimName: keycloak-data

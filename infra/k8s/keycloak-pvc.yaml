@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: keycloak-data
+
+spec:
+  # Una única instancia de Keycloak podrá montar
+  # este volumen en lectura/escritura.
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+      # Suficiente para PoC local.
+      storage: 1Gi
